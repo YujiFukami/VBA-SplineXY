@@ -4,24 +4,17 @@ Option Explicit
 'SplineXY          ・・・元場所：FukamiAddins3.ModApproximate
 'Spline            ・・・元場所：FukamiAddins3.ModApproximate
 'SplineKeisu       ・・・元場所：FukamiAddins3.ModApproximate
-'F_MMult           ・・・元場所：FukamiAddins3.ModMatrix     
 'F_Minverse        ・・・元場所：FukamiAddins3.ModMatrix     
 '正方行列かチェック・・・元場所：FukamiAddins3.ModMatrix     
 'F_MDeterm         ・・・元場所：FukamiAddins3.ModMatrix     
 'F_Mgyoirekae      ・・・元場所：FukamiAddins3.ModMatrix     
 'F_Mgyohakidasi    ・・・元場所：FukamiAddins3.ModMatrix     
 'F_Mjyokyo         ・・・元場所：FukamiAddins3.ModMatrix     
-
-'------------------------------
-'シート関数用近似、補間関数
-'------------------------------
-
-'行列を使った計算
-'代替関数
-'------------------------------
+'F_MMult           ・・・元場所：FukamiAddins3.ModMatrix     
 
 
-Public Function SplineXY(ByVal ArrayXY2D, InputX#)
+
+Public Function SplineXY(ByVal ArrayXY2D, InputX As Double)
     'スプライン補間計算を行う
     '＜出力値の説明＞
     '入力値Xに対する補間値Y
@@ -33,8 +26,7 @@ Public Function SplineXY(ByVal ArrayXY2D, InputX#)
     
     '入力値のチェック及び修正'※※※※※※※※※※※※※※※※※※※※※※※※※※※
     '入力がセルから(ワークシート関数)だった場合の処理
-    Dim RangeNaraTrue As Boolean
-    RangeNaraTrue = False
+    Dim RangeNaraTrue As Boolean: RangeNaraTrue = False
     If IsObject(ArrayXY2D) Then
         ArrayXY2D = ArrayXY2D.Value
         RangeNaraTrue = True
@@ -45,8 +37,10 @@ Public Function SplineXY(ByVal ArrayXY2D, InputX#)
         ArrayXY2D = Application.Transpose(Application.Transpose(ArrayXY2D))
     End If
     
-    Dim ArrayX1D, ArrayY1D
-    Dim I%, N%
+    Dim ArrayX1D
+    Dim ArrayY1D
+    Dim I As Integer
+    Dim N As Integer
     N = UBound(ArrayXY2D, 1)
     ReDim ArrayX1D(1 To N)
     ReDim ArrayY1D(1 To N)
@@ -57,7 +51,7 @@ Public Function SplineXY(ByVal ArrayXY2D, InputX#)
     Next I
     
     '計算処理※※※※※※※※※※※※※※※※※※※※※※※※※※※
-    Dim OutputY#
+    Dim OutputY As Double
     OutputY = Spline(ArrayX1D, ArrayY1D, InputX)
     
     '出力※※※※※※※※※※※※※※※※※※※※※※※※※※※
@@ -71,16 +65,16 @@ Public Function SplineXY(ByVal ArrayXY2D, InputX#)
     
 End Function
 
-Private Function Spline#(ByVal ArrayX1D, ByVal ArrayY1D, InputX#)
+Private Function Spline(ByVal ArrayX1D, ByVal ArrayY1D, InputX As Double)
         
     '20171124修正
     '20180309改良
     
     'スプライン補間計算を行う
-    '
+    
     '<出力値の説明>
     '入力値Xに対する補間値Y
-    '
+    
     '<入力値の説明>
     'ArrayX1D：補間の対象とする配列X
     'ArrayY1D：補間の対象とする配列Y
@@ -104,7 +98,8 @@ Private Function Spline#(ByVal ArrayX1D, ByVal ArrayY1D, InputX#)
     End If
     
     '配列の次元チェック
-    Dim JigenCheck1%, JigenCheck2%
+    Dim JigenCheck1 As Integer
+    Dim JigenCheck2 As Integer
     On Error Resume Next
     JigenCheck1 = UBound(ArrayX1D, 2) '配列の次元が1ならエラーとなる
     JigenCheck2 = UBound(ArrayY1D, 2) '配列の次元が1ならエラーとなる
@@ -119,8 +114,14 @@ Private Function Spline#(ByVal ArrayX1D, ByVal ArrayY1D, InputX#)
     End If
     
     '計算処理※※※※※※※※※※※※※※※※※※※※※※※※※※※
-    Dim I%, N%, K%, A, B, C, D
-    Dim OutputY# '出力値Y
+    Dim I As Integer
+    Dim N As Integer
+    Dim K As Integer
+    Dim A
+    Dim B
+    Dim C
+    Dim D
+    Dim OutputY As Double '出力値Y
     Dim SotoNaraTrue As Boolean
     SotoNaraTrue = False
     N = UBound(ArrayX1D, 1)
@@ -181,17 +182,21 @@ End Function
 Private Function SplineKeisu(ByVal ArrayX1D, ByVal ArrayY1D)
 
     '参考：http://www5d.biglobe.ne.jp/stssk/maze/spline.html
-    Dim I%, J%, K%, M%, N% '数え上げ用(Integer型)
-    Dim A, B, C, D
+    Dim I As Integer
+    Dim N As Integer
+    Dim A
+    Dim B
+    Dim C
+    Dim D
     N = UBound(ArrayX1D, 1)
     ReDim A(1 To N)
     ReDim B(1 To N)
     ReDim D(1 To N)
     
-    Dim h#()
-    Dim ArrayL2D#() '左辺の配列 要素数(1 to N,1 to N)
-    Dim ArrayR1D#() '右辺の配列 要素数(1 to N,1 to 1)
-    Dim ArrayLm2D#() '左辺の配列の逆行列 要素数(1 to N,1 to N)
+    Dim h()         As Double
+    Dim ArrayL2D()  As Double '左辺の配列 要素数(1 to N,1 to N)
+    Dim ArrayR1D()  As Double '右辺の配列 要素数(1 to N,1 to 1)
+    Dim ArrayLm2D() As Double '左辺の配列の逆行列 要素数(1 to N,1 to N)
     
     ReDim h(1 To N - 1)
     ReDim ArrayL2D(1 To N, 1 To N)
@@ -257,68 +262,6 @@ Private Function SplineKeisu(ByVal ArrayX1D, ByVal ArrayY1D)
 
 End Function
 
-Private Function F_MMult(ByVal Matrix1, ByVal Matrix2)
-    'F_MMult(Matrix1, Matrix2)
-    'F_MMult(配列①,配列②)
-    '行列の積を計算
-    '20180213改良
-    '20210603改良
-    
-    '入力値のチェックと修正※※※※※※※※※※※※※※※※※※※※※※※※※※※
-    '配列の次元チェック
-    Dim JigenCheck1%, JigenCheck2%
-    On Error Resume Next
-    JigenCheck1 = UBound(Matrix1, 2) '配列の次元が1ならエラーとなる
-    JigenCheck2 = UBound(Matrix2, 2) '配列の次元が1ならエラーとなる
-    On Error GoTo 0
-    
-    '配列の次元が1なら次元2にする。例)配列(1 to N)→配列(1 to N,1 to 1)
-    If IsEmpty(JigenCheck1) Then
-        Matrix1 = Application.Transpose(Matrix1)
-    End If
-    If IsEmpty(JigenCheck2) Then
-        Matrix2 = Application.Transpose(Matrix2)
-    End If
-    
-    '行列の開始要素を1に変更（計算しやすいから）
-    If UBound(Matrix1, 1) = 0 Or UBound(Matrix1, 2) = 0 Then
-        Matrix1 = Application.Transpose(Application.Transpose(Matrix1))
-    End If
-    If UBound(Matrix2, 1) = 0 Or UBound(Matrix2, 2) = 0 Then
-        Matrix2 = Application.Transpose(Application.Transpose(Matrix2))
-    End If
-    
-    '入力値のチェック
-    If UBound(Matrix1, 2) <> UBound(Matrix2, 1) Then
-        MsgBox ("配列1の列数と配列2の行数が一致しません。" & vbLf & _
-               "(出力) = (配列1)(配列2)")
-        Stop
-        End
-    End If
-    
-    '計算処理※※※※※※※※※※※※※※※※※※※※※※※※※※※
-    Dim I%, J%, K%, M%, N% '数え上げ用(Integer型)
-    Dim M2%
-    Dim Output#() '出力する配列
-    N = UBound(Matrix1, 1) '配列1の行数
-    M = UBound(Matrix1, 2) '配列1の列数
-    M2 = UBound(Matrix2, 2) '配列2の列数
-    
-    ReDim Output(1 To N, 1 To M2)
-    
-    For I = 1 To N '各行
-        For J = 1 To M2 '各列
-            For K = 1 To M '(配列1のI行)と(配列2のJ列)を掛け合わせる
-                Output(I, J) = Output(I, J) + Matrix1(I, K) * Matrix2(K, J)
-            Next K
-        Next J
-    Next I
-    
-    '出力※※※※※※※※※※※※※※※※※※※※※※※※※※※
-    F_MMult = Output
-    
-End Function
-
 Private Function F_Minverse(ByVal Matrix)
     '20210603改良
     'F_Minverse(input_M)
@@ -335,12 +278,14 @@ Private Function F_Minverse(ByVal Matrix)
     Call 正方行列かチェック(Matrix)
     
     '計算処理※※※※※※※※※※※※※※※※※※※※※※※※※※※
-    Dim I%, J%, K%, M%, M2%, N% '数え上げ用(Integer型)
+    Dim I        As Integer
+    Dim J        As Integer
+    Dim N        As Integer
+    Dim Output() As Double
     N = UBound(Matrix, 1)
-    Dim Output#()
     ReDim Output(1 To N, 1 To N)
     
-    Dim detM# '行列式の値を格納
+    Dim detM As Double '行列式の値を格納
     detM = F_MDeterm(Matrix) '行列式を求める
     
     Dim Mjyokyo '指定の列・行を除去した配列を格納
@@ -391,7 +336,10 @@ Private Function F_MDeterm(Matrix)
     Call 正方行列かチェック(Matrix)
     
     '計算処理※※※※※※※※※※※※※※※※※※※※※※※※※※※
-    Dim I%, J%, K%, M%, N% '数え上げ用(Integer型)
+    Dim I As Integer
+    Dim J As Integer
+    Dim K As Integer
+    Dim N As Integer
     N = UBound(Matrix, 1)
     
     Dim Matrix2 '掃き出しを行う行列
@@ -422,7 +370,7 @@ Private Function F_MDeterm(Matrix)
     
     
     '行列式の計算
-    Dim Output#
+    Dim Output As Double
     Output = 1
     
     For I = 1 To N '各(I列,I行)を掛け合わせていく
@@ -434,13 +382,17 @@ Private Function F_MDeterm(Matrix)
     
 End Function
 
-Private Function F_Mgyoirekae(Matrix, Row1%, Row2%)
+Private Function F_Mgyoirekae(Matrix, Row1 As Integer, Row2 As Integer)
     '20210603改良
     'F_Mgyoirekae(Matrix, Row1, Row2)
     'F_Mgyoirekae(配列,指定行番号①,指定行番号②)
     '行列Matrixの①行と②行を入れ替える
     
-    Dim I%, J%, K%, M%, N% '数え上げ用(Integer型)
+    Dim I     As Integer
+    Dim J     As Integer
+    Dim K     As Integer
+    Dim M     As Integer
+    Dim N     As Integer
     Dim Output
     
     Output = Matrix
@@ -454,28 +406,29 @@ Private Function F_Mgyoirekae(Matrix, Row1%, Row2%)
     F_Mgyoirekae = Output
 End Function
 
-Private Function F_Mgyohakidasi(Matrix, Row%, Col%)
+Private Function F_Mgyohakidasi(Matrix, Row As Integer, Col As Integer)
     '20210603改良
     'F_Mgyohakidasi(Matrix, Row, Col)
     'F_Mgyohakidasi(配列,指定行,指定列)
     '行列MatrixのRow行､Col列の値で各行を掃き出す
     
-    Dim I%, J%, K%, M%, N% '数え上げ用(Integer型)
+    Dim I     As Integer
+    Dim J     As Integer
+    Dim N     As Integer
     Dim Output
     
     Output = Matrix
     N = UBound(Output, 1) '行数取得
     
     Dim Hakidasi '掃き出し元の行
-    Dim X# '掃き出し元の値
-    Dim Y#
+    Dim X As Double '掃き出し元の値
+    Dim Y As Double
     ReDim Hakidasi(1 To N)
     X = Matrix(Row, Col)
     
     For I = 1 To N '掃き出し元の1行を作成
         Hakidasi(I) = Matrix(Row, I)
     Next I
-    
     
     For I = 1 To N '各行
         If I = Row Then
@@ -498,20 +451,25 @@ Private Function F_Mgyohakidasi(Matrix, Row%, Col%)
     
 End Function
 
-Private Function F_Mjyokyo(Matrix, Row%, Col%)
+Private Function F_Mjyokyo(Matrix, Row As Integer, Col As Integer)
     '20210603改良
     'F_Mjyokyo(Matrix, Row, Col)
     'F_Mjyokyo(配列,指定行,指定列)
     '行列MatrixのRow行、Col列を除去した行列を返す
     
-    Dim I%, J%, K%, M%, N% '数え上げ用(Integer型)
+    Dim I As Integer
+    Dim J As Integer
+    Dim K As Integer
+    Dim M As Integer
+    Dim N As Integer '数え上げ用(Integer型)
     Dim Output '指定した行・列を除去後の配列
     
     N = UBound(Matrix, 1) '行数取得
     M = UBound(Matrix, 2) '列数取得
     ReDim Output(1 To N - 1, 1 To M - 1)
     
-    Dim I2%, J2%
+    Dim I2 As Integer
+    Dim J2 As Integer
     
     I2 = 0 '行方向数え上げ初期化
     For I = 1 To N
@@ -535,6 +493,73 @@ Private Function F_Mjyokyo(Matrix, Row%, Col%)
     
     F_Mjyokyo = Output
 
+End Function
+
+Private Function F_MMult(ByVal Matrix1, ByVal Matrix2)
+    'F_MMult(Matrix1, Matrix2)
+    'F_MMult(配列①,配列②)
+    '行列の積を計算
+    '20180213改良
+    '20210603改良
+    
+    '入力値のチェックと修正※※※※※※※※※※※※※※※※※※※※※※※※※※※
+    '配列の次元チェック
+    Dim JigenCheck1 As Integer
+    Dim JigenCheck2 As Integer
+    On Error Resume Next
+    JigenCheck1 = UBound(Matrix1, 2) '配列の次元が1ならエラーとなる
+    JigenCheck2 = UBound(Matrix2, 2) '配列の次元が1ならエラーとなる
+    On Error GoTo 0
+    
+    '配列の次元が1なら次元2にする。例)配列(1 to N)→配列(1 to N,1 to 1)
+    If IsEmpty(JigenCheck1) Then
+        Matrix1 = Application.Transpose(Matrix1)
+    End If
+    If IsEmpty(JigenCheck2) Then
+        Matrix2 = Application.Transpose(Matrix2)
+    End If
+    
+    '行列の開始要素を1に変更（計算しやすいから）
+    If UBound(Matrix1, 1) = 0 Or UBound(Matrix1, 2) = 0 Then
+        Matrix1 = Application.Transpose(Application.Transpose(Matrix1))
+    End If
+    If UBound(Matrix2, 1) = 0 Or UBound(Matrix2, 2) = 0 Then
+        Matrix2 = Application.Transpose(Application.Transpose(Matrix2))
+    End If
+    
+    '入力値のチェック
+    If UBound(Matrix1, 2) <> UBound(Matrix2, 1) Then
+        MsgBox ("配列1の列数と配列2の行数が一致しません。" & vbLf & _
+               "(出力) = (配列1)(配列2)")
+        Stop
+        End
+    End If
+    
+    '計算処理※※※※※※※※※※※※※※※※※※※※※※※※※※※
+    Dim I        As Integer
+    Dim J        As Integer
+    Dim K        As Integer
+    Dim M        As Integer
+    Dim N        As Integer
+    Dim M2       As Integer
+    Dim Output() As Double '出力する配列
+    N = UBound(Matrix1, 1) '配列1の行数
+    M = UBound(Matrix1, 2) '配列1の列数
+    M2 = UBound(Matrix2, 2) '配列2の列数
+    
+    ReDim Output(1 To N, 1 To M2)
+    
+    For I = 1 To N '各行
+        For J = 1 To M2 '各列
+            For K = 1 To M '(配列1のI行)と(配列2のJ列)を掛け合わせる
+                Output(I, J) = Output(I, J) + Matrix1(I, K) * Matrix2(K, J)
+            Next K
+        Next J
+    Next I
+    
+    '出力※※※※※※※※※※※※※※※※※※※※※※※※※※※
+    F_MMult = Output
+    
 End Function
 
 
